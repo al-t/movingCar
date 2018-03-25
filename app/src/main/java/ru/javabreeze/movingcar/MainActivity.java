@@ -1,20 +1,14 @@
 package ru.javabreeze.movingcar;
 
+import android.animation.Animator;
 import android.animation.AnimatorSet;
-import android.app.Activity;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.databinding.DataBindingUtil;
-import android.graphics.Matrix;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.RotateAnimation;
-import android.view.animation.TranslateAnimation;
-import android.widget.ImageView;
 
 import ru.javabreeze.movingcar.databinding.ActivityMainBinding;
 
@@ -30,19 +24,16 @@ public class MainActivity extends AppCompatActivity {
 
     private float x1, y1; // coordinates of car centre
     private float x2, y2; // coordinates of tap position
-    private float width, height;
-    private float pivotX, pivotY; // coordinates of rotation pivot
     private float currentAngle = 0;
     private float angleToRotate;
     private boolean coordsWereInitialised;
+    float width, height;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         setTouchListener();
-//        binding.car.setX(100);
-//        binding.car.setY(100);
     }
 
     private void setTouchListener() {
@@ -54,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
                     v.performClick();
                     x2 = event.getX();
                     y2 = event.getY();
-                    Log.v(TAG, "Tapped... x2: " + x2 + ", y2: " + y2);
                     moveCarToTapPosition();
                     break;
                 default:
@@ -65,125 +55,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void moveCarToTapPosition() {
-
         getCarPosition();
         getRotationAngle();
-        rotateCar();
-//        moveCar();
+        moveCar();
     }
 
     private void moveCar() {
-        TranslateAnimation move = new TranslateAnimation(
-                Animation.ABSOLUTE, 0,
-                Animation.ABSOLUTE, x2 - x1,
-                Animation.ABSOLUTE, 0,
-                Animation.ABSOLUTE, y2 - y1);
-//        TranslateAnimation move = new TranslateAnimation(
-//                Animation.RELATIVE_TO_SELF, 0,
-//                Animation.RELATIVE_TO_SELF, 100,
-//                Animation.RELATIVE_TO_SELF, 0,
-//                Animation.RELATIVE_TO_SELF, 100);
-        move.setFillEnabled(true);
-        move.setFillAfter(true);
-        move.setDuration(MOVEMENT_TIME);
-        move.setInterpolator(new AccelerateDecelerateInterpolator());
-        binding.car.startAnimation(move);
-    }
-
-    private void rotateCar() {
-        Log.v(TAG, "currentAngle: " + currentAngle);
-        Log.v(TAG, "angleToRotate: " + angleToRotate);
-        RotateAnimation rotate = new RotateAnimation(currentAngle, angleToRotate,
-                Animation.RELATIVE_TO_SELF, 0.5f,
-                Animation.RELATIVE_TO_SELF, 0.5f);
-//        rotate.setFillEnabled(true);
-//        rotate.setFillAfter(true);
+        ObjectAnimator rotate = ObjectAnimator.ofFloat(binding.car ,
+                "rotation", currentAngle, angleToRotate);
         rotate.setDuration(ROTATION_TIME);
-        rotate.setInterpolator(new AccelerateDecelerateInterpolator());
-//        Toast toast = Toast.makeText(getApplicationContext(), "X: " + x2 + ", Y: " + y2 +
-//                ", Angle: " + angleToRotate, Toast.LENGTH_SHORT); toast.show();
-//        binding.car.startAnimation(rotate);
-
-        TranslateAnimation move = new TranslateAnimation(
-                Animation.ABSOLUTE, 0,
-                Animation.ABSOLUTE, x2 - x1,
-                Animation.ABSOLUTE, 0,
-                Animation.ABSOLUTE, y2 - y1);
-//        TranslateAnimation move = new TranslateAnimation(
-//                Animation.RELATIVE_TO_SELF, 0,
-//                Animation.RELATIVE_TO_SELF, 100,
-//                Animation.RELATIVE_TO_SELF, 0,
-//                Animation.RELATIVE_TO_SELF, 100);
-//        move.setFillEnabled(true);
-//        move.setFillAfter(true);
+        PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat("x",  x1 - width / 2, x2 - width / 2);
+        PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat("y",  y1 - height / 2, y2 - height / 2);
+        ObjectAnimator move = ObjectAnimator.ofPropertyValuesHolder(binding.car, pvhX, pvhY);
         move.setDuration(MOVEMENT_TIME);
-        move.setStartOffset(ROTATION_TIME);
-        move.setInterpolator(new AccelerateDecelerateInterpolator());
-//        binding.car.startAnimation(move);
-
-        Activity activity = this;
-        AnimationSet as = new AnimationSet(true);
-        as.setInterpolator(new AccelerateDecelerateInterpolator());
-        as.addAnimation(rotate);
-//        as.addAnimation(move);
-        as.setFillEnabled(true);
-        as.setFillAfter(true);
-        as.setAnimationListener(new Animation.AnimationListener() {
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playSequentially(rotate, move);
+        animatorSet.addListener(new Animator.AnimatorListener() {
             @Override
-            public void onAnimationStart(Animation animation) {
-//                binding.car.setDrawingCacheEnabled(true);
+            public void onAnimationStart(Animator animation) {
+                removeTouchListener();
             }
 
             @Override
-            public void onAnimationEnd(Animation animation) {
-                Log.v(TAG, "x2: " + x2 + ", y2: " + y2);
-                Log.v(TAG, "x2 - x1: " + (x2 - x1) + ", y2 - y1: " + (y2 - y1));
-//                binding.car.setX(Utility.convertDpToPixel(activity, 100));
-//                binding.car.setY(Utility.convertDpToPixel(activity, 100));
-//                binding.car.setAnimation(null);
-//                Matrix matrix = new Matrix();
-//                binding.car.setScaleType(ImageView.ScaleType.MATRIX);   //required
-//                obtainPivotRotation();
-//                matrix.postRotate(angleToRotate, pivotX, pivotY);
-//                binding.car.setImageMatrix(matrix);
-
-//                binding.car.setX(Utility.convertPxToDp(activity, x2));
-//                binding.car.setY(Utility.convertPxToDp(activity, y2));
-//                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-//                ConstraintLayout.LayoutParams par = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
-//              par.topMargin = (int) y2;
-//              par.leftMargin = (int) x2;
-//              binding.car.setLayoutParams(par);
-//                binding.car.setX(x2);
-//                binding.car.setY(y2);
-//                x1 = x2;
-//                y1 = y2;
-//                binding.car.layout(
-//                        ((int) (x1 - binding.car.getMeasuredWidth())),
-//                        ((int) (y1 - binding.car.getMeasuredHeight())),
-//                        ((int) (x1)),
-//                        ((int) (y1)));
-//                ConstraintLayout.LayoutParams par = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
-//                par.topMargin = (int) y2;
-//                par.leftMargin = (int) x2;
-//                binding.car.setLayoutParams(par);
-//                binding.car.setDrawingCacheEnabled(false);
+            public void onAnimationEnd(Animator animation) {
+                setTouchListener();
             }
 
             @Override
-            public void onAnimationRepeat(Animation animation) {
+            public void onAnimationCancel(Animator animation) {
+                setTouchListener();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
             }
         });
-        binding.car.startAnimation(as);
-        as.start();
+        animatorSet.start();
 
         currentAngle = angleToRotate;
-        Log.v(TAG, "x2: " + x2 + ", y2: " + y2);
     }
 
-    private void obtainPivotRotation() {
-        pivotX = binding.car.getWidth() / 2;
-        pivotY = binding.car.getHeight() / 2;
+    private void removeTouchListener() {
+        binding.space.setOnTouchListener(null);
     }
 
     private void getRotationAngle() {
@@ -209,14 +122,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getCarPosition() {
-        if (!coordsWereInitialised) {
             x1 = binding.car.getX() + binding.car.getWidth() / 2;
             y1 = binding.car.getY() + binding.car.getHeight() / 2;
             width = binding.car.getWidth();
             height = binding.car.getHeight();
-            coordsWereInitialised = true;
-        }
     }
-
-
 }
