@@ -7,7 +7,6 @@ import android.animation.PropertyValuesHolder;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 
 import ru.javabreeze.movingcar.databinding.ActivityMainBinding;
@@ -26,7 +25,6 @@ public class MainActivity extends AppCompatActivity {
     private float x2, y2; // coordinates of tap position
     private float currentAngle = 0;
     private float angleToRotate;
-    private boolean coordsWereInitialised;
     float width, height;
 
     @Override
@@ -61,11 +59,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void moveCar() {
-        ObjectAnimator rotate = ObjectAnimator.ofFloat(binding.car ,
+        ObjectAnimator rotate = ObjectAnimator.ofFloat(binding.car,
                 "rotation", currentAngle, angleToRotate);
         rotate.setDuration(ROTATION_TIME);
-        PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat("x",  x1 - width / 2, x2 - width / 2);
-        PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat("y",  y1 - height / 2, y2 - height / 2);
+        PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat("x", x1 - width / 2, x2 - width / 2);
+        PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat("y", y1 - height / 2, y2 - height / 2);
         ObjectAnimator move = ObjectAnimator.ofPropertyValuesHolder(binding.car, pvhX, pvhY);
         move.setDuration(MOVEMENT_TIME);
         AnimatorSet animatorSet = new AnimatorSet();
@@ -93,6 +91,11 @@ public class MainActivity extends AppCompatActivity {
         animatorSet.start();
 
         currentAngle = angleToRotate;
+        if (currentAngle > 180) {
+            currentAngle -= 360;
+        } else if (currentAngle < -180) {
+            currentAngle += 360;
+        }
     }
 
     private void removeTouchListener() {
@@ -102,29 +105,49 @@ public class MainActivity extends AppCompatActivity {
     private void getRotationAngle() {
 
         angleToRotate = (float) Math.toDegrees(Math.atan((x2 - x1) / (y1 - y2)));
-        if (x2 > x1) {
+        if (x2 > x1) { // right direction
             if (y2 > y1) { // bottom-right direction
-                if (currentAngle < -90) {
-                    angleToRotate = angleToRotate - 180;
+                float angle1 = 180 + angleToRotate;
+                float angle2 = angleToRotate - 180;
+                if (Math.abs(currentAngle - angle1) < Math.abs(currentAngle - angle2)) {
+                    angleToRotate = angle1;
                 } else {
-                    angleToRotate = 180 + angleToRotate;
+                    angleToRotate = angle2;
+                }
+            } else {  // top-right direction
+                float angle1 = angleToRotate;
+                float angle2 = angleToRotate - 360;
+                if (Math.abs(currentAngle - angle1) < Math.abs(currentAngle - angle2)) {
+                    angleToRotate = angle1;
+                } else {
+                    angleToRotate = angle2;
                 }
             }
         } else {
             if (y2 > y1) { // bottom-left direction
-                if (currentAngle > 90) {
-                    angleToRotate = angleToRotate + 180;
+                float angle1 = 180 + angleToRotate;
+                float angle2 = angleToRotate - 180;
+                if (Math.abs(currentAngle - angle1) < Math.abs(currentAngle - angle2)) {
+                    angleToRotate = angle1;
                 } else {
-                    angleToRotate = angleToRotate - 180;
+                    angleToRotate = angle2;
+                }
+            } else { // top-left direction
+                float angle1 = angleToRotate;
+                float angle2 = angleToRotate + 360;
+                if (Math.abs(currentAngle - angle1) < Math.abs(currentAngle - angle2)) {
+                    angleToRotate = angle1;
+                } else {
+                    angleToRotate = angle2;
                 }
             }
         }
     }
 
     private void getCarPosition() {
-            x1 = binding.car.getX() + binding.car.getWidth() / 2;
-            y1 = binding.car.getY() + binding.car.getHeight() / 2;
-            width = binding.car.getWidth();
-            height = binding.car.getHeight();
+        x1 = binding.car.getX() + binding.car.getWidth() / 2;
+        y1 = binding.car.getY() + binding.car.getHeight() / 2;
+        width = binding.car.getWidth();
+        height = binding.car.getHeight();
     }
 }
