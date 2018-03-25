@@ -103,7 +103,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getRotationAngle() {
-
         angleToRotate = (float) Math.toDegrees(Math.atan((x2 - x1) / (y1 - y2)));
         if (x2 > x1) { // right direction
             if (y2 > y1) { // bottom-right direction
